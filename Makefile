@@ -19,6 +19,8 @@ vpath .base build
 
 # your C compiler:
 CC       = gcc
+# DI 1-27-25: (pathway to my local GCC installation)
+# CC       = /opt/homebrew/bin/gcc-13
 #CC       = icc
 #CC       = pgcc
 

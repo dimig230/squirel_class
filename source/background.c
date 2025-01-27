@@ -1267,6 +1267,13 @@ int background_ncdm_distribution(
        species.
     */
 
+    /* DI 1-27-25: */
+
+    /* Default distribution is FD. Alternate distributions (including 
+        BE) are entered below and can be sampled by setting the first 
+        entry of ncdm_psd_parameters, extracted above from the input 
+        and now called param[..], to the appropriate value. */
+    
     /**************************************************/
     /*    FERMI-DIRAC INCLUDING CHEMICAL POTENTIALS   */
     /**************************************************/
@@ -1281,6 +1288,42 @@ int background_ncdm_distribution(
         account by introducing the mixing angles. In the later part
         (not read by the code) we illustrate how to do this. */
 
+    /* Deal now with custom distributions, assuming only the first
+        massive species will be non-FD. */
+
+    if ((n_ncdm==0) && (param)) {
+      
+      if (param[0] == 1) {
+        /**************************************************/
+        /*   BOSE-EINSTEIN INCLUDING CHEMICAL POTENTIALS  */
+        /**************************************************/
+
+        /* Note that this gets multiplied by deg_ncdm = 1/2*g where 
+            the internal DOF g=1 for spin-0 bosons (and g=2 for 
+            spin-1/2 fermions). Thus, user should enter deg_ncdm = 
+            1/2 if minimal cases bosons are desired.
+        */
+
+        *f0 = 1.0/pow(2*_PI_,3)*(1./(exp(q-ksi)-1.) +1./(exp(q+ksi)-1.));
+
+        /**************************************************/
+      }
+      else if (param[0] == 2) {
+        /**************************************************/
+        /* ZEROTH AND FIRST MOMENT MATCHED BOSE-EINSTEIN  */
+        /**************************************************/
+
+        /* user should keep on the default deg_ncdm = 1 if their 
+            desire is to match minimal case spin-1/2 fermions.
+        */
+
+        *f0 = 81.0/(686.*pow(_PI_,3))*(1./(exp(6./7.*q)-1.));
+
+        /**************************************************/
+      }
+    }
+    
+    
     if (_FALSE_) {
 
       /* We must use the list of extra parameters read in input, stored in the
