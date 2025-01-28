@@ -2305,6 +2305,20 @@ cdef class Class:
                 value = self.ba.m_ncdm_in_eV[0]
             elif name == 'm_ncdm_tot':
                 value = self.ba.Omega0_ncdm_tot*self.ba.h*self.ba.h*93.14
+            # DI 1-28-25: Adding Omega0_ncdm of first species and Omega0_ncdm_tot (and respective physical densities) as derived params
+            elif name == 'Omega0_ncdm1':
+                self.compute(["background"])
+                value = self.ba.Omega0_ncdm[0]
+            elif name == 'omega0_ncdm1':
+                self.compute(["background"])
+                value = self.ba.Omega0_ncdm[0]*self.ba.h*self.ba.h
+            elif name == 'Omega0_ncdm':
+                self.compute(["background"])
+                value = self.ba.Omega0_ncdm_tot
+            elif name == 'omega0_ncdm':
+                self.compute(["background"])
+                value = self.ba.Omega0_ncdm_tot*self.ba.h*self.ba.h
+            # End modification
             elif name == 'Neff':
                 value = self.ba.Neff
             elif name == 'Omega_m':
