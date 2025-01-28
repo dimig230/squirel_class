@@ -87,6 +87,9 @@ cdef extern from "class.h":
         double Omega0_idm
         double Omega0_dcdm
         double Omega0_ncdm_tot
+        # DI 1-28-25:
+        double * Omega0_ncdm
+        # End modification
         double Omega0_lambda
         double Omega0_fld
         double w0_fld
