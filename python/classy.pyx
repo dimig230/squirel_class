@@ -2331,6 +2331,9 @@ cdef class Class:
             elif name == 'log10omega0_ncdm':
                 self.compute(["background"])
                 value = np.log10(self.ba.Omega0_ncdm_tot*self.ba.h*self.ba.h)
+            elif name == 'log10m_ncdm_in_eV':
+                self.compute(["background"])
+                value = np.log10(self.ba.m_ncdm_in_eV[0])           
             # End modification
             elif name == 'Neff':
                 value = self.ba.Neff
