@@ -1308,16 +1308,13 @@ int background_ncdm_distribution(
 
         /**************************************************/
       }
-      else if (param[0] == 2) {
+      else if (param[0] == 3) {
         /**************************************************/
-        /* ZEROTH AND FIRST MOMENT MATCHED BOSE-EINSTEIN  */
+        /*           NR NT DECAY DAUGHTER APPROX          */
         /**************************************************/
 
-        /* user should keep on the default deg_ncdm = 1 if their 
-            desire is to match minimal case spin-1/2 fermions.
-        */
-
-        *f0 = 81.0/(686.*pow(_PI_,3))*(1./(exp(6./7.*q)-1.));
+        double R_max = param[1];
+        *f0 = 0.8823*(1./q)*1./2.*((exp(R_max-q)-exp(q-R_max))/(exp(R_max-q)+exp(q-R_max))+1);
 
         /**************************************************/
       }
