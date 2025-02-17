@@ -1330,7 +1330,8 @@ int background_ncdm_distribution(
         /*           NR NT DECAY DAUGHTER APPROX          */
         /**************************************************/
 
-        *f0 = 0.8823*(1./q);
+        double R_max = param[1];
+        *f0 = 0.8823*(1./q)*1./2.*((exp(R_max-q)-exp(q-R_max))/(exp(R_max-q)+exp(q-R_max))+1);
 
         /**************************************************/
       }
