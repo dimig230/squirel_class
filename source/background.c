@@ -1316,7 +1316,7 @@ int background_ncdm_distribution(
         double LN_sigma = param[1];
         double LN_mu = param[2];
 
-        *f0 = 1.0/pow(2*_PI_,3)*1.0/(q*LN_sigma*sqrt(2*_PI_))*exp(-pow(log(q)-LN_mu,2)/(2*pow(LN_sigma,2)));
+        *f0 = 2.0/pow(2*_PI_,3)*1.0/(q*LN_sigma*sqrt(2*_PI_))*exp(-pow(log(q)-LN_mu,2)/(2*pow(LN_sigma,2)));
 
         /**************************************************/
       }
