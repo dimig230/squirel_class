@@ -2612,6 +2612,22 @@ cdef class Class:
             elif name == 'omega0_ncdm':
                 self.compute(["background"])
                 value = self.ba.Omega0_ncdm_tot*self.ba.h*self.ba.h
+            # DI 2-11-25: Adding log10 of each of above as derived params
+            elif name == 'log10Omega0_ncdm1':
+                self.compute(["background"])
+                value = np.log10(self.ba.Omega0_ncdm[0])
+            elif name == 'log10omega0_ncdm1':
+                self.compute(["background"])
+                value = np.log10(self.ba.Omega0_ncdm[0]*self.ba.h*self.ba.h)
+            elif name == 'log10Omega0_ncdm':
+                self.compute(["background"])
+                value = np.log10(self.ba.Omega0_ncdm_tot)
+            elif name == 'log10omega0_ncdm':
+                self.compute(["background"])
+                value = np.log10(self.ba.Omega0_ncdm_tot*self.ba.h*self.ba.h)
+            elif name == 'log10m_ncdm_in_eV':
+                self.compute(["background"])
+                value = np.log10(self.ba.m_ncdm_in_eV[0])           
             # End modification
             elif name == 'Neff':
                 value = self.ba.Neff
