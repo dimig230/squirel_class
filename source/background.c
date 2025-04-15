@@ -1310,35 +1310,25 @@ int background_ncdm_distribution(
       }
       else if (param[0] == 2) {
         /**************************************************/
-        /*                     LOG NORMAL                 */
+        /*                 LOG NORMAL (LN)                */
         /**************************************************/
 
         double LN_sigma = param[1];
-        double LN_mu = param[2];
 
-        *f0 = 2.0/pow(2*_PI_,3)*1.0/(q*LN_sigma*sqrt(2*_PI_))*exp(-pow(log(q)-LN_mu,2)/(2*pow(LN_sigma,2)));
+        *f0 = 2.0/pow(2*_PI_,3)*1.0/(q*LN_sigma*sqrt(2*_PI_))*exp(-pow(log(q),2)/(2*pow(LN_sigma,2)));
 
         /**************************************************/
       }
       else if (param[0] == 3) {
         /**************************************************/
-        /*         TRANSFORMED GAUSSIAN ON (0,inf)        */
+        /*        NON-THERMAL RELATIVISTIC DECAY (RD)     */
         /**************************************************/
 
-        double G_sigma = param[1];
-        double G_mu = param[2];
-
-        *f0 = 2.0/pow(2*_PI_,3)*1.0/G_sigma/sqrt(2*_PI_)*exp(-1/2*pow((q-1/q)/G_sigma,2));
-
-        /**************************************************/
-      }
-      else if (param[0] == 4) {
-        /**************************************************/
-        /*           NR NT DECAY DAUGHTER APPROX          */
-        /**************************************************/
-
-        double R_max = param[1];
-        *f0 = 0.8823*(1./q)*1./2.*((exp(R_max-q)-exp(q-R_max))/(exp(R_max-q)+exp(q-R_max))+1);
+        /* As with the BE and LN, we adjust the normalization 
+            by 2/(2pi)^3 to match default CLASS normalization 
+            of FD
+        */
+        *f0 = 2.0/pow(2*_PI_,3)*pow(q,-5./2.)*exp(-0.74*pow(q,2.));
 
         /**************************************************/
       }
