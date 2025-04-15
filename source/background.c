@@ -1314,16 +1314,29 @@ int background_ncdm_distribution(
       }
       else if (param[0] == 2) {
         /**************************************************/
-        /*                     LOG NORMAL                 */
+        /*                 LOG NORMAL (LN)                */
         /**************************************************/
 
         double LN_sigma = param[1];
-        double LN_mu = param[2];
 
-        *f0 = 2.0/pow(2*_PI_,3)*1.0/(q*LN_sigma*sqrt(2*_PI_))*exp(-pow(log(q)-LN_mu,2)/(2*pow(LN_sigma,2)));
+        *f0 = 2.0/pow(2*_PI_,3)*1.0/(q*LN_sigma*sqrt(2*_PI_))*exp(-pow(log(q),2)/(2*pow(LN_sigma,2)));
 
         /**************************************************/
       }
+      else if (param[0] == 3) {
+        /**************************************************/
+        /*        NON-THERMAL RELATIVISTIC DECAY (RD)     */
+        /**************************************************/
+
+        /* As with the BE and LN, we adjust the normalization 
+            by 2/(2pi)^3 to match default CLASS normalization 
+            of FD
+        */
+        *f0 = 2.0/pow(2*_PI_,3)*pow(q,-5./2.)*exp(-0.74*pow(q,2.));
+
+        /**************************************************/
+      }
+
     }
     
     

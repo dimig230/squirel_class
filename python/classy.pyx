@@ -2755,7 +2755,11 @@ cdef class Class:
                 value = np.log10(self.ba.Omega0_ncdm_tot*self.ba.h*self.ba.h)
             elif name == 'log10m_ncdm_in_eV':
                 self.compute(["background"])
-                value = np.log10(self.ba.m_ncdm_in_eV[0])           
+                value = np.log10(self.ba.m_ncdm_in_eV[0]) 
+            # DI 4-15-25: Adding T_ncdm of first species as derived parameter  
+            elif name == 'T_ncdm1':
+                self.compute(["background"])
+                value = self.ba.T_ncdm[0]     
             # End modification
             elif name == 'Neff':
                 value = self.ba.Neff
