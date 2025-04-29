@@ -1332,7 +1332,7 @@ int background_ncdm_distribution(
             by 2/(2pi)^3 to match default CLASS normalization 
             of FD
         */
-        *f0 = 2.0/pow(2*_PI_,3)*pow(q,-5./2.)*exp(-0.74*pow(q,2.));
+        *f0 = 2.0/pow(2*_PI_,3)*2.19*pow(q,-5./2.)*exp(-0.74*pow(q,2.));
 
         /**************************************************/
       }
