@@ -97,6 +97,7 @@ struct background
                                              default value */
   int * ncdm_input_q_size; /**< Vector of numbers of q bins */
   double * ncdm_qmax;      /**< Vector of maximum value of q */
+  double * ncdm_a; 
 
   double Omega0_k;         /**< \f$ \Omega_{0_k} \f$: curvature contribution */
 

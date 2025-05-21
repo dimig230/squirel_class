@@ -9,6 +9,7 @@ int get_qsampling_manual(double *x,
 			 double *w,
 			 int N,
 			 double qmax,
+       double a, 
 			 enum ncdm_quadrature_method method,
 			 double *qvec,
 			 int qsiz,
@@ -60,6 +61,24 @@ int get_qsampling_manual(double *x,
       x[i] = 1.0/t-1.0;
       (*function)(params_for_function,x[i],&y);
       w[i] = y*(qmax-1)/(N-1)*h/t/t;
+    }
+    return _SUCCESS_;
+  case (qm_trapz_indefinite_scaled) :
+    /** We do the variable transformation q = 1/t-1. The trapezoidal rule is closed, but since the distribution function
+	goes to zero in both limits, we can use an effectively N+2 rule simply by not using the exterior points. */
+    for (i=0; i<N; i++){
+      /** ND 5-20-25: This method rescales the sampling in q by an arbitrary polynomial sampling function. 
+       * (e.g. q^2, q^3, etc.). This is useful for sampling the distribution function more densely in the low q region.
+       * Particularly, by careful choice of qmax, the number of samples, and the scaling function, you can sample 
+       * distributions densely at low q (where the distribution is changing significantly) and sparsely at high q (where 
+       * the distribution is not changing significantly, but still has a significant amplitude), for example. 
+       */
+      double dt = pow(qmax, 1.0/a) / N;
+      t = (i+1) * dt;
+      x[i] = pow(t, a);
+      /** End modification */
+      (*function)(params_for_function,x[i],&y);
+      w[i] = y * pow(t, -2.0*a) * a * pow(t, a-1) * dt;
     }
     return _SUCCESS_;
   }

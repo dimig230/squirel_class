@@ -924,6 +924,7 @@ int background_free_input(
     free(pba->ncdm_quadrature_strategy);
     free(pba->ncdm_input_q_size);
     free(pba->ncdm_qmax);
+    free(pba->ncdm_a);
     free(pba->q_ncdm);
     free(pba->w_ncdm);
     free(pba->q_ncdm_bg);
@@ -1551,6 +1552,7 @@ int background_ncdm_init(
                                       pba->w_ncdm[k],
                                       pba->q_size_ncdm[k],
                                       pba->ncdm_qmax[k],
+                                      pba->ncdm_a[k],
                                       pba->ncdm_quadrature_strategy[k],
                                       pbadist.q,
                                       pbadist.tablesize,

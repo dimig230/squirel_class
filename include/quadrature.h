@@ -10,7 +10,7 @@
 /******************************************/
 #include "common.h"
 
-enum ncdm_quadrature_method {qm_auto, qm_Laguerre, qm_trapz_indefinite, qm_trapz};
+enum ncdm_quadrature_method {qm_auto, qm_Laguerre, qm_trapz_indefinite, qm_trapz_indefinite_scaled, qm_trapz};
 
 /* Structures for QSS */
 
@@ -45,6 +45,7 @@ typedef struct adaptive_integration_tree_node{
 				double *w,
 				int N,
 				double qmax,
+				double a,
 				enum ncdm_quadrature_method method,
 				double *qvec,
 				int qsiz,
