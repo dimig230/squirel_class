@@ -2338,6 +2338,13 @@ cdef class Class:
             elif name == 'T_ncdm1':
                 self.compute(["background"])
                 value = self.ba.T_ncdm[0]     
+            # DI 4-16-25: Adding fraction of first species (out of total DM) and corresponding log10 as derived parameter  
+            elif name == 'f_ncdm1':
+                self.compute(["background"])
+                value = self.ba.Omega0_ncdm[0]/(self.ba.Omega0_cdm+self.ba.Omega0_ncdm_tot)     
+            elif name == 'log10f_ncdm1':
+                self.compute(["background"])
+                value = np.log10(self.ba.Omega0_ncdm[0]/(self.ba.Omega0_cdm+self.ba.Omega0_ncdm_tot))     
             # End modification
             elif name == 'Neff':
                 value = self.ba.Neff

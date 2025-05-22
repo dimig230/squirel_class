@@ -920,8 +920,8 @@ int background_free_input(
     free(pba->ncdm_quadrature_strategy);
     free(pba->ncdm_input_q_size);
     free(pba->ncdm_qmax);
+    free(pba->ncdm_a);
     free(pba->q_ncdm);
-    free(pba->w_ncdm);
     free(pba->q_ncdm_bg);
     free(pba->w_ncdm_bg);
     free(pba->dlnf0_dlnq_ncdm);
@@ -1328,7 +1328,7 @@ int background_ncdm_distribution(
             by 2/(2pi)^3 to match default CLASS normalization 
             of FD
         */
-        *f0 = 2.0/pow(2*_PI_,3)*pow(q,-5./2.)*exp(-0.74*pow(q,2.));
+        *f0 = 2.0/pow(2*_PI_,3)*2.19*pow(q,-5./2.)*exp(-0.74*pow(q,2.));
 
         /**************************************************/
       }
@@ -1547,6 +1547,7 @@ int background_ncdm_init(
                                       pba->w_ncdm[k],
                                       pba->q_size_ncdm[k],
                                       pba->ncdm_qmax[k],
+                                      pba->ncdm_a[k],
                                       pba->ncdm_quadrature_strategy[k],
                                       pbadist.q,
                                       pbadist.tablesize,

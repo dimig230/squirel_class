@@ -2632,6 +2632,7 @@ int input_read_parameters_species(struct file_content * pfc,
     }
     else {
       class_read_list_of_doubles_or_default("ncdm_maximum_q", pba->ncdm_qmax, 15, N_ncdm);
+      class_read_list_of_doubles_or_default("ncdm_a", pba->ncdm_a, 1, N_ncdm);
     }
 
     /** 5.h.2) Number of momentum bins */
