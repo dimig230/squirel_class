@@ -50,17 +50,11 @@ int get_qsampling_manual(double *x,
     /** We do the variable transformation q = 1/t-1. The trapezoidal rule is closed, but since the distribution function
 	goes to zero in both limits, we can use an effectively N+2 rule simply by not using the exterior points. */
     for (i=0; i<N; i++){
-      /** DI 5-5-25: By default, this strategy samples N points from qmin=1/N to qmax=N-1 
-      (in effect, an N+2 rule on [0,inf) using that the distribution goes to zero in each limit). 
-      However, this becomes computationally expensive when a large qmax is desired. Thus, this
-      modifies it to sample N points from qmin=1/qmax to qmax=qmax, adopting the qmax parameter 
-      from quadrature strategy 3. */
-      h = 1.0/(qmax+1.0);
-      t = h + (qmax-1)/(N-1)*i*h;
-      /** End modification */
+      h = 1.0/(N+1.0);
+      t = h + i*h;
       x[i] = 1.0/t-1.0;
       (*function)(params_for_function,x[i],&y);
-      w[i] = y*(qmax-1)/(N-1)*h/t/t;
+      w[i] = y*h/t/t;
     }
     return _SUCCESS_;
   case (qm_trapz_indefinite_scaled) :
@@ -78,7 +72,8 @@ int get_qsampling_manual(double *x,
       x[i] = pow(t, a);
       /** End modification */
       (*function)(params_for_function,x[i],&y);
-      w[i] = y * pow(t, -2.0*a) * a * pow(t, a-1) * dt;
+      w[i] = y * a * pow(t, a-1) * dt;
+      /**printf("(t,q,y,w) = (%g,%g%g,%g)\n",t,x[i],y,w[i]);*/
     }
     return _SUCCESS_;
   }
