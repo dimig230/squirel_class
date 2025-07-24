@@ -4,6 +4,7 @@
 /* Thomas Tram                            */
 /******************************************/
 #include "quadrature.h"
+#include "background.h"
 
 int get_qsampling_manual(double *x,
 			 double *w,
@@ -20,6 +21,7 @@ int get_qsampling_manual(double *x,
   double y, h, t;
   double *b, *c;
   int i;
+
   switch (method){ 
   case (qm_auto) :
     return _FAILURE_;
@@ -60,20 +62,230 @@ int get_qsampling_manual(double *x,
   case (qm_trapz_indefinite_scaled) :
     /** We do the variable transformation q = 1/t-1. The trapezoidal rule is closed, but since the distribution function
 	goes to zero in both limits, we can use an effectively N+2 rule simply by not using the exterior points. */
-    for (i=0; i<N; i++){
+    
+    /* Check for log-normal distribution optimization before the loop */
+    double optimal_qmax = qmax;
+    int optimal_N = N;  /* Start with user value, will be optimized if log-normal detected */
+    double optimal_a = a;
+    
+    struct background_parameters_for_distributions * pbadist_local = 
+        (struct background_parameters_for_distributions *) params_for_function;
+    struct background * pba_local = pbadist_local->pba;
+    double *param = pba_local->ncdm_psd_parameters;
+    
+    /* If we have parameters and this is a log-normal distribution (param[0] == 2) */
+    if (param != NULL && param[0] == 2.0 && pbadist_local->n_ncdm == 0) {
+      double sigma = param[1];
+      
+      /* Polynomial fit coefficients for optimal 'a' from custom_sampler_optimization.py */
+      double c0 = -1.397e+01;  /* σ³ coefficient */
+      double c1 = 4.018e+01;   /* σ² coefficient */  
+      double c2 = -3.187e+01;  /* σ coefficient */
+      double c3 = 1.079e+01;   /* constant term */
+      
+      /* Calculate optimal 'a' using polynomial fit: a(σ) = c₀σ³ + c₁σ² + c₂σ + c₃ */
+      double polynomial_a = c0*sigma*sigma*sigma + c1*sigma*sigma + c2*sigma + c3;
+      optimal_a = polynomial_a;
+      
+      /* Ensure reasonable bounds for 'a' */
+      if (optimal_a < 0.01) optimal_a = 0.01;
+      if (optimal_a > 20.0) optimal_a = 20.0;  /* Increased upper bound for larger sigma values */
+
+      /* Lookup table from q_bounds_for_accuracy.dat (sigma, qmin, qmax, optimal_a, min_samples) */
+      /* Data covers sigma from 0.01 to 0.17 with accuracy goal 1e-6 */
+      /* Using 20 sample points for all sigma values - ensures at least 1e-6 tolerance */
+      double sigma_table[] = {
+        0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1 , 0.11,
+        0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.2 , 0.21, 0.22,
+        0.23, 0.24, 0.25, 0.26, 0.27, 0.28, 0.29, 0.3 , 0.31, 0.32, 0.33,
+        0.34, 0.35, 0.36, 0.37, 0.38, 0.39, 0.4 , 0.41, 0.42, 0.43, 0.44,
+        0.45, 0.46, 0.47, 0.48, 0.49, 0.5 , 0.51, 0.52, 0.53, 0.54, 0.55,
+        0.56, 0.57, 0.58, 0.59, 0.6 , 0.61, 0.62, 0.63, 0.64, 0.65, 0.66,
+        0.67, 0.68, 0.69, 0.7 , 0.71, 0.72, 0.73, 0.74, 0.75, 0.76, 0.77,
+        0.78, 0.79, 0.8 , 0.81, 0.82, 0.83, 0.84, 0.85, 0.86, 0.87, 0.88,
+        0.89, 0.9 , 0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99,
+        1.  , 1.01, 1.02, 1.03, 1.04, 1.05, 1.06, 1.07, 1.08, 1.09, 1.1 ,
+        1.11, 1.12, 1.13, 1.14, 1.15, 1.16, 1.17, 1.18, 1.19, 1.2 , 1.21,
+        1.22, 1.23, 1.24, 1.25, 1.26, 1.27, 1.28, 1.29, 1.3 , 1.31, 1.32,
+        1.33, 1.34, 1.35, 1.36, 1.37, 1.38, 1.39, 1.4 , 1.41, 1.42, 1.43,
+        1.44, 1.45, 1.46, 1.47, 1.48, 1.49, 1.5 , 1.51, 1.52, 1.53, 1.54,
+        1.55, 1.56, 1.57, 1.58, 1.59, 1.6 , 1.61, 1.62, 1.63, 1.64, 1.65,
+        1.66, 1.67, 1.68, 1.69, 1.7 , 1.71, 1.72, 1.73, 1.74, 1.75, 1.76,
+        1.77, 1.78, 1.79, 1.8 , 1.81, 1.82, 1.83, 1.84, 1.85, 1.86, 1.87,
+        1.88, 1.89, 1.9 , 1.91, 1.92, 1.93, 1.94, 1.95, 1.96, 1.97, 1.98,
+        1.99, 2.
+      };
+      double qmax_table[] = {
+        1.05028815e+00, 1.10288460e+00, 1.15862641e+00, 1.21745817e+00,
+        1.27956036e+00, 1.34682208e+00, 1.41849603e+00, 1.49242245e+00,
+        1.57344137e+00, 1.65984168e+00, 1.75200829e+00, 1.85035573e+00,
+        1.95533058e+00, 2.06741408e+00, 2.18712486e+00, 2.31502208e+00,
+        2.45170869e+00, 2.59783504e+00, 2.75410275e+00, 2.92126898e+00,
+        3.10015102e+00, 3.29163127e+00, 3.51160749e+00, 3.73274278e+00,
+        3.96970481e+00, 4.22370757e+00, 4.49606351e+00, 4.81226577e+00,
+        5.12803537e+00, 5.46698037e+00, 5.83091675e+00, 6.25662960e+00,
+        6.67990437e+00, 7.13486467e+00, 7.62403471e+00, 8.20019234e+00,
+        8.77088423e+00, 9.44513690e+00, 1.01120167e+01, 1.08302922e+01,
+        1.16827821e+01, 1.25240625e+01, 1.35253373e+01, 1.45122472e+01,
+        1.56900180e+01, 1.68495798e+01, 1.82369984e+01, 1.96015258e+01,
+        2.12382993e+01, 2.28464805e+01, 2.47802238e+01, 2.66784333e+01,
+        2.89663104e+01, 3.14678872e+01, 3.39209207e+01, 3.68871901e+01,
+        4.01345097e+01, 4.33158146e+01, 4.71747726e+01, 5.14044734e+01,
+        5.55446706e+01, 6.05818553e+01, 6.61095534e+01, 7.21780643e+01,
+        7.81130383e+01, 8.53608237e+01, 9.33269763e+01, 1.02086274e+02,
+        1.11721598e+02, 1.22324840e+02, 1.32685702e+02, 1.45403506e+02,
+        1.59414620e+02, 1.74856658e+02, 1.91882433e+02, 2.10661695e+02,
+        2.31383065e+02, 2.54256205e+02, 2.79514232e+02, 3.07416432e+02,
+        3.38251281e+02, 3.72339839e+02, 4.10039536e+02, 4.51748420e+02,
+        4.97909908e+02, 5.49018111e+02, 6.05623794e+02, 6.75868697e+02,
+        7.46221702e+02, 8.24231963e+02, 9.10763740e+02, 1.00678191e+03,
+        1.12630434e+03, 1.24612086e+03, 1.37922133e+03, 1.52712970e+03,
+        1.71167893e+03, 1.89682851e+03, 2.10280123e+03, 2.33201641e+03,
+        2.61867052e+03, 2.90648269e+03, 3.22711390e+03, 3.62875023e+03,
+        4.03227092e+03, 4.53825728e+03, 5.04687956e+03, 5.61449609e+03,
+        6.32738032e+03, 7.04443322e+03, 7.94589660e+03, 8.85308729e+03,
+        9.99471293e+03, 1.11441628e+04, 1.25920636e+04, 1.42345070e+04,
+        1.58896241e+04, 1.79773594e+04, 2.00822175e+04, 2.27397750e+04,
+        2.57602913e+04, 2.88081083e+04, 3.26614062e+04, 3.70460335e+04,
+        4.14738904e+04, 4.70793762e+04, 5.34650574e+04, 5.99188400e+04,
+        6.80997644e+04, 7.74297867e+04, 8.80744017e+04, 1.00223481e+05,
+        1.12519834e+05, 1.28139125e+05, 1.45985450e+05, 1.66383996e+05,
+        1.89708460e+05, 2.16388434e+05, 2.46917927e+05, 2.77879950e+05,
+        3.17318621e+05, 3.62495294e+05, 4.14263560e+05, 4.73606578e+05,
+        5.41657111e+05, 6.19720710e+05, 7.09302554e+05, 8.12138533e+05,
+        9.30231245e+05, 1.08166614e+06, 1.23992432e+06, 1.42185967e+06,
+        1.63108681e+06, 1.87178247e+06, 2.14877441e+06, 2.46764461e+06,
+        2.87765162e+06, 3.30719053e+06, 3.80219278e+06, 4.37282596e+06,
+        5.03086458e+06, 5.87856725e+06, 6.76819839e+06, 7.79515463e+06,
+        9.11954086e+06, 1.05109288e+07, 1.21187280e+07, 1.41944140e+07,
+        1.63774137e+07, 1.89024811e+07, 2.21658522e+07, 2.56014993e+07,
+        2.95794354e+07, 3.47259298e+07, 4.01496276e+07, 4.71713600e+07,
+        5.45765844e+07, 6.41701685e+07, 7.42948414e+07, 8.74203544e+07,
+        1.01282130e+08, 1.19264441e+08, 1.40493630e+08, 1.62938210e+08,
+        1.92082888e+08, 2.22916937e+08, 2.62982087e+08, 3.10365428e+08,
+        3.60548627e+08, 4.25818350e+08, 5.03091491e+08, 5.85016093e+08,
+        6.91671455e+08, 8.18072908e+08, 9.67929313e+08, 1.12702957e+09,
+        1.33441616e+09, 1.58053766e+09, 1.87273082e+09, 2.21974047e+09
+      };
+      int N_table[] = {
+        20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 
+        20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 
+        20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 
+        20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 
+        20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 
+        20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 
+        20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 
+        20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 
+        20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 
+        20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 
+        20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 
+        20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 
+        20, 20, 20, 20, 20, 20, 20, 20
+      };
+      int table_size = 200;
+      
+      /* Linear interpolation for optimal values */
+      if (sigma >= sigma_table[0] && sigma <= sigma_table[table_size-1]) {
+        /* Find bracketing indices */
+        int idx = 0;
+        while (idx < table_size-1 && sigma > sigma_table[idx+1]) {
+          idx++;
+        }
+        
+        if (idx < table_size-1) {
+          /* Linear interpolation */
+          double t = (sigma - sigma_table[idx]) / (sigma_table[idx+1] - sigma_table[idx]);
+          optimal_qmax = qmax_table[idx] + t * (qmax_table[idx+1] - qmax_table[idx]);
+          optimal_N = (t < 0.5) ? N_table[idx] : N_table[idx+1];  /* Use nearest neighbor for N */
+        } else {
+          /* Use last values */
+          optimal_qmax = qmax_table[table_size-1];
+          optimal_N = N_table[table_size-1];
+        }
+      } else if (sigma < sigma_table[0]) {
+        /* Use first values for sigma below range */
+        optimal_qmax = qmax_table[0];
+        optimal_N = N_table[0];
+      } else {
+        /* Use last values for sigma above range */
+        optimal_qmax = qmax_table[table_size-1];
+        optimal_N = N_table[table_size-1];
+      }
+      
+      /* Use the input N value directly - let user control via ncdm_N_momentum_bins */
+      optimal_N = N;
+      
+      /* Print info about optimization */
+      printf("Log-normal distribution detected: σ=%.3f\n", sigma);
+      printf("  Polynomial-optimized 'a': %.3f (polynomial predicted: %.3f, input 'a': %.3f)\n", 
+             optimal_a, polynomial_a, a);
+      printf("  Lookup-optimized qmax: %.3f (input qmax: %.3f)\n", 
+             optimal_qmax, qmax);
+      printf("  Using N=%d momentum bins (set via ncdm_N_momentum_bins parameter)\n", optimal_N);
+    }
+    
+    for (i=0; i<optimal_N; i++){
       /** ND 5-20-25: This method rescales the sampling in q by an arbitrary polynomial sampling function. 
        * (e.g. q^2, q^3, etc.). This is useful for sampling the distribution function more densely in the low q region.
        * Particularly, by careful choice of qmax, the number of samples, and the scaling function, you can sample 
        * distributions densely at low q (where the distribution is changing significantly) and sparsely at high q (where 
        * the distribution is not changing significantly, but still has a significant amplitude), for example. 
+       * 
+       * ENHANCED 7-23-25: For log-normal distributions, automatically use optimized 'a' parameter based on sigma.
        */
-      double dt = pow(qmax, 1.0/a) / N;
+       
+      double dt = pow(optimal_qmax, 1.0/optimal_a) / optimal_N;
       t = (i+1) * dt;
-      x[i] = pow(t, a);
+      x[i] = pow(t, optimal_a);
       /** End modification */
       (*function)(params_for_function,x[i],&y);
-      w[i] = y * a * pow(t, a-1) * dt;
+      w[i] = y * optimal_a * pow(t, optimal_a-1) * dt;
       /**printf("(t,q,y,w) = (%g,%g%g,%g)\n",t,x[i],y,w[i]);*/
+    }
+    
+    /* Fill remaining array elements with zeros if we used fewer points than allocated */
+    for (i=optimal_N; i<N; i++){
+      x[i] = 0.0;
+      w[i] = 0.0;
+    }
+    return _SUCCESS_;
+  case (qm_lognormal_optimized) :
+    /** Optimized sampling for log-normal distributions using fitted polynomial for 'a' parameter.
+     * This method implements the optimal 'a' value based on sigma parameter from log-normal distribution.
+     * The polynomial fit: a(σ) = c₀σ³ + c₁σ² + c₂σ + c₃ was derived from numerical optimization.
+     */
+    for (i=0; i<N; i++){
+      /* Extract sigma parameter from ncdm_psd_parameters if available */
+      struct background_parameters_for_distributions * pbadist_local = 
+          (struct background_parameters_for_distributions *) params_for_function;
+      struct background * pba_local = pbadist_local->pba;
+      double *param = pba_local->ncdm_psd_parameters;
+      double sigma = 1.0; /* default value */
+      double optimal_a = a; /* default to user-provided value */
+      
+      /* If we have parameters and this is a log-normal distribution (param[0] == 2) */
+      if (param != NULL && param[0] == 2.0 && pbadist_local->n_ncdm == 0) {
+        sigma = param[1];
+        /* Polynomial fit coefficients from optimization */
+        double c0 = -1.397e+01;  /* σ³ coefficient */
+        double c1 = 4.018e+01;   /* σ² coefficient */  
+        double c2 = -3.187e+01;  /* σ coefficient */
+        double c3 = 1.079e+01;   /* constant term */
+        
+        /* Calculate optimal 'a' using polynomial fit */
+        optimal_a = c0*sigma*sigma*sigma + c1*sigma*sigma + c2*sigma + c3;
+        
+        /* Ensure reasonable bounds for 'a' */
+        if (optimal_a < 0.1) optimal_a = 0.1;
+        if (optimal_a > 100.0) optimal_a = 100.0;
+      }
+      
+      /* Use the optimal (or default) 'a' value for sampling */
+      double dt = pow(qmax, 1.0/optimal_a) / N;
+      t = (i+1) * dt;
+      x[i] = pow(t, optimal_a);
+      (*function)(params_for_function,x[i],&y);
+      w[i] = y * optimal_a * pow(t, optimal_a-1) * dt;
     }
     return _SUCCESS_;
   }
