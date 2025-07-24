@@ -811,7 +811,7 @@ int background_init(
 
   /** - write class version */
   if (pba->background_verbose > 0) {
-    printf("Running CLASS version %s\n",_VERSION_);
+    printf("Running squirel_CLASS version %s\n",_VERSION_);
     printf("Computing background\n");
   }
 
