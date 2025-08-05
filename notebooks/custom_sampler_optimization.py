@@ -226,8 +226,10 @@ if __name__ == "__main__":
             optimal_a, min_samples, best_integral = find_optimal_a(
                 lambda q: np.power(q, 3.0) * lognormgaussian(q, sigma=sigma),
                 qmin=q_min, 
+                #qmin=1.e-9,  # Start from a very small qmin to avoid numerical issues
                 qmax=q_max, 
-                goal=finite_integral, 
+                # goal=finite_integral, 
+                goal=full_integral, 
                 tolerance=accuracy_goal,
                 a_range=a_range, 
                 a_steps=a_steps,
@@ -235,7 +237,7 @@ if __name__ == "__main__":
                 )
             best_integral_qmin0 = custom_sample(
                 lambda q: np.power(q, 3.0) * lognormgaussian(q, sigma=sigma),
-                qmin=1.e-9,
+                qmin=1.e-9,  # Consistent with find_optimal_a qmin
                 qmax=q_max,
                 a=optimal_a,
                 n_samples=min_samples
@@ -447,6 +449,7 @@ if __name__ == "__main__":
             q_maxs_comp = results_array[:, 2]
             min_samples_orig = results_array[:, 4].astype(int)
             finite_integrals_comp = results_array[:, 7]
+            full_integrals_comp = results_array[:, 8]  # Use full_integral (column 8) instead of finite_integral (column 7)
 
             # Store the number of samples needed when using the fitted 'a'
             n_samples_fit_list = []
@@ -456,7 +459,8 @@ if __name__ == "__main__":
                 sigma = sigmas_comp[i]
                 q_min = q_mins_comp[i]
                 q_max = q_maxs_comp[i]
-                goal = finite_integrals_comp[i]
+                # goal = finite_integrals_comp[i]  # Use finite_integral instead of full_integral
+                goal = full_integrals_comp[i]  # Use full_integral instead of finite_integral
                 n_samples_orig = min_samples_orig[i]
                 
                 # Get 'a' from the polynomial fit
