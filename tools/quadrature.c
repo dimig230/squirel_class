@@ -65,6 +65,7 @@ int get_qsampling_manual(double *x,
     
     /* Check for log-normal distribution optimization before the loop */
     double optimal_qmax = qmax;
+    double optimal_qmin = 0.0;  /* Will be set from lookup table for log-normal distributions */
     int optimal_N = N;  /* Start with user value, will be optimized if log-normal detected */
     double optimal_a = a;
     
@@ -115,6 +116,58 @@ int get_qsampling_manual(double *x,
         1.88, 1.89, 1.9 , 1.91, 1.92, 1.93, 1.94, 1.95, 1.96, 1.97, 1.98,
         1.99, 2.
       };
+      double qmin_table[] = {
+        9.51929260e-01, 9.05988100e-01, 8.61538812e-01, 8.18759228e-01,
+        7.77620589e-01, 7.37161850e-01, 6.98097031e-01, 6.61529564e-01,
+        6.25336624e-01, 5.90537449e-01, 5.57126630e-01, 5.25094042e-01,
+        4.94425263e-01, 4.65101979e-01, 4.37102380e-01, 4.10401543e-01,
+        3.84971795e-01, 3.60783068e-01, 3.37803232e-01, 3.15998408e-01,
+        2.95333271e-01, 2.75771331e-01, 2.56180269e-01, 2.38748808e-01,
+        2.22307941e-01, 2.06818576e-01, 1.92241624e-01, 1.77645013e-01,
+        1.64816488e-01, 1.52784564e-01, 1.41511508e-01, 1.30231501e-01,
+        1.20403862e-01, 1.11225758e-01, 1.02662772e-01, 9.41037286e-02,
+        8.67055290e-02, 7.93172223e-02, 7.29541227e-02, 6.70479636e-02,
+        6.11566825e-02, 5.61094073e-02, 5.10798716e-02, 4.67849866e-02,
+        4.25096268e-02, 3.88702649e-02, 3.52513163e-02, 3.21800877e-02,
+        2.91294344e-02, 2.65481005e-02, 2.39869366e-02, 2.18259533e-02,
+        1.96843093e-02, 1.77358446e-02, 1.60984553e-02, 1.44788786e-02,
+        1.30100056e-02, 1.17804041e-02, 1.05665781e-02, 9.46906415e-03,
+        8.55373224e-03, 7.65194488e-03, 6.83900335e-03, 6.10689889e-03,
+        5.49917617e-03, 4.90212126e-03, 4.36599485e-03, 3.88505445e-03,
+        3.45404232e-03, 3.06815115e-03, 2.74992074e-03, 2.43864511e-03,
+        2.16073144e-03, 1.91283940e-03, 1.69193428e-03, 1.49526250e-03,
+        1.32032861e-03, 1.16487390e-03, 1.02685637e-03, 9.04432137e-04,
+        7.95938167e-04, 6.99876279e-04, 6.14898352e-04, 5.39792672e-04,
+        4.73471350e-04, 4.14958755e-04, 3.63380889e-04, 3.14414361e-04,
+        2.74867129e-04, 2.40100734e-04, 2.09563550e-04, 1.82764103e-04,
+        1.57435130e-04, 1.37073855e-04, 1.19251677e-04, 1.03665080e-04,
+        8.89861339e-05, 7.72287651e-05, 6.69726887e-05, 5.80335895e-05,
+        4.96445455e-05, 4.29489253e-05, 3.71278392e-05, 3.16794112e-05,
+        2.73420431e-05, 2.32897232e-05, 2.00691766e-05, 1.72809275e-05,
+        1.46826861e-05, 1.26229627e-05, 1.07070204e-05, 9.19067180e-06,
+        7.78266662e-06, 6.67013058e-06, 5.63889733e-06, 4.76304034e-06,
+        4.07262988e-06, 3.43439960e-06, 2.93210489e-06, 2.46857160e-06,
+        2.07657743e-06, 1.76879477e-06, 1.48551444e-06, 1.24656777e-06,
+        1.05938780e-06, 8.87559467e-07, 7.42989751e-07, 6.29999848e-07,
+        5.26545003e-07, 4.39720374e-07, 3.66914418e-07, 3.05915234e-07,
+        2.58418676e-07, 2.15119561e-07, 1.78931597e-07, 1.48712098e-07,
+        1.23497645e-07, 1.02476700e-07, 8.49662871e-08, 7.14016780e-08,
+        5.91102399e-08, 4.88961698e-08, 4.04152896e-08, 3.33792212e-08,
+        2.75465525e-08, 2.27153669e-08, 1.87169286e-08, 1.54103541e-08,
+        1.26781159e-08, 1.02702638e-08, 8.43597193e-09, 6.92397232e-09,
+        5.67862277e-09, 4.65370701e-09, 3.81087050e-09, 3.11830998e-09,
+        2.51175252e-09, 2.05208476e-09, 1.67527500e-09, 1.36662720e-09,
+        1.11400700e-09, 8.93724436e-10, 7.27399339e-10, 5.91586682e-10,
+        4.73471206e-10, 3.84481241e-10, 3.11986067e-10, 2.49101901e-10,
+        2.01826291e-10, 1.63402645e-10, 1.30159112e-10, 1.05220657e-10,
+        8.49982943e-11, 6.75470163e-11, 5.44834722e-11, 4.32295215e-11,
+        3.48169948e-11, 2.75822409e-11, 2.21817314e-11, 1.75452352e-11,
+        1.40890877e-11, 1.11269193e-11, 8.78063218e-12, 7.03529420e-12,
+        5.54326441e-12, 4.43492780e-12, 3.48903307e-12, 2.74274750e-12,
+        2.18952302e-12, 1.71857887e-12, 1.34788745e-12, 1.07365767e-12,
+        8.40800799e-13, 6.57940416e-13, 5.14454325e-13, 4.08595261e-13,
+        3.19008165e-13, 2.48873685e-13, 1.94010612e-13, 1.51126959e-13
+      }; 
       double qmax_table[] = {
         1.05028815e+00, 1.10288460e+00, 1.15862641e+00, 1.21745817e+00,
         1.27956036e+00, 1.34682208e+00, 1.41849603e+00, 1.49242245e+00,
@@ -196,19 +249,23 @@ int get_qsampling_manual(double *x,
           /* Linear interpolation */
           double t = (sigma - sigma_table[idx]) / (sigma_table[idx+1] - sigma_table[idx]);
           optimal_qmax = qmax_table[idx] + t * (qmax_table[idx+1] - qmax_table[idx]);
+          optimal_qmin = qmin_table[idx] + t * (qmin_table[idx+1] - qmin_table[idx]);
           optimal_N = (t < 0.5) ? N_table[idx] : N_table[idx+1];  /* Use nearest neighbor for N */
         } else {
           /* Use last values */
           optimal_qmax = qmax_table[table_size-1];
+          optimal_qmin = qmin_table[table_size-1];
           optimal_N = N_table[table_size-1];
         }
       } else if (sigma < sigma_table[0]) {
         /* Use first values for sigma below range */
         optimal_qmax = qmax_table[0];
+        optimal_qmin = qmin_table[0];
         optimal_N = N_table[0];
       } else {
         /* Use last values for sigma above range */
         optimal_qmax = qmax_table[table_size-1];
+        optimal_qmin = qmin_table[table_size-1];
         optimal_N = N_table[table_size-1];
       }
       
@@ -219,9 +276,15 @@ int get_qsampling_manual(double *x,
       printf("Log-normal distribution detected: σ=%.3f\n", sigma);
       printf("  Polynomial-optimized 'a': %.3f (polynomial predicted: %.3f, input 'a': %.3f)\n", 
              optimal_a, polynomial_a, a);
+      printf("  Lookup-optimized qmin: %.6e (lookup table)\n", optimal_qmin);
       printf("  Lookup-optimized qmax: %.3f (input qmax: %.3f)\n", 
              optimal_qmax, qmax);
+      printf("  Optimized q-range: [%.6e, %.3f] vs input: [0.0, %.3f]\n", 
+             optimal_qmin, optimal_qmax, qmax);
       printf("  Using N=%d momentum bins (set via ncdm_N_momentum_bins parameter)\n", optimal_N);
+    } else {
+      /* For non-log-normal distributions, use traditional sampling from 0 */
+      optimal_qmin = 0.0;
     }
     
     for (i=0; i<optimal_N; i++){
@@ -232,14 +295,29 @@ int get_qsampling_manual(double *x,
        * the distribution is not changing significantly, but still has a significant amplitude), for example. 
        * 
        * ENHANCED 7-23-25: For log-normal distributions, automatically use optimized 'a' parameter based on sigma.
+       * ENHANCED 8-5-25: For log-normal distributions, use optimized qmin and qmax from lookup table.
        */
        
-      double dt = pow(optimal_qmax, 1.0/optimal_a) / optimal_N;
-      t = (i+1) * dt;
-      x[i] = pow(t, optimal_a);
+      /* For log-normal optimization, sample between optimal_qmin and optimal_qmax */
+      if (param != NULL && param[0] == 2.0 && pbadist_local->n_ncdm == 0) {
+        /* Transform to sample between qmin and qmax using the scaling parameter 'a' */
+        double t_min = pow(optimal_qmin, 1.0/optimal_a);
+        double t_max = pow(optimal_qmax, 1.0/optimal_a);
+        double dt = (t_max - t_min) / optimal_N;
+        t = t_min + (i+1) * dt;
+        x[i] = pow(t, optimal_a);
+        (*function)(params_for_function,x[i],&y);
+        /* Jacobian includes the transformation and the sampling density */
+        w[i] = y * optimal_a * pow(t, optimal_a-1) * dt;
+      } else {
+        /* Original implementation for non-log-normal distributions */
+        double dt = pow(optimal_qmax, 1.0/optimal_a) / optimal_N;
+        t = (i+1) * dt;
+        x[i] = pow(t, optimal_a);
+        (*function)(params_for_function,x[i],&y);
+        w[i] = y * optimal_a * pow(t, optimal_a-1) * dt;
+      }
       /** End modification */
-      (*function)(params_for_function,x[i],&y);
-      w[i] = y * optimal_a * pow(t, optimal_a-1) * dt;
       /**printf("(t,q,y,w) = (%g,%g%g,%g)\n",t,x[i],y,w[i]);*/
     }
     
